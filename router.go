@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -24,7 +25,13 @@ func root(writer http.ResponseWriter, request *http.Request) {
 }
 
 func debug(writer http.ResponseWriter, request *http.Request) {
-	InfoLogger.Println(request)
+	bytes, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		ErrorLogger.Println(err)
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	InfoLogger.Printf("Body of the request was: %s", bytes)
 }
 
 func router() *mux.Router {
