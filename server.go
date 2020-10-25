@@ -3,11 +3,16 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
+	port := "8888"
+	if os.Getenv("PORT") != "" {
+		port = os.Getenv("PORT")
+	}
 	InfoLogger.Println("Bootstrapping")
 	http.Handle("/", router())
-	InfoLogger.Println("Router ready, starting server")
-	log.Fatal(http.ListenAndServe("localhost:8888", nil))
+	InfoLogger.Printf("Router ready, starting server on port %s\n", port)
+	log.Fatal(http.ListenAndServe("localhost:"+port, nil))
 }
