@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"raspi/server/db"
-	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -27,6 +26,19 @@ func root(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
+func moisture_data(writer http.ResponseWriter, b []byte) {
+	data, error := ParseSensorData(b)
+	if error != nil {
+		ErrorLogger.Printf("Failed to parse sensor data JSON from request bytes: %b\n", b)
+		http.Error(writer, error.Error(), http.StatusBadRequest)
+		return
+	}
+	if data.Location == "" {
+		data.Location = "unknown"
+	}
+	db.WriteMoisture(os.Getenv("INFLUX_ORG"), os.Getenv("INFLUX_BUCKET"), data.Location, data.Value)
+}
+
 func debug(writer http.ResponseWriter, request *http.Request) {
 	b, err := ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -34,12 +46,7 @@ func debug(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	value, error := strconv.Atoi(string(b))
-	if error != nil {
-		ErrorLogger.Printf("Failed to convert int from request bytes: %b", b)
-	} else {
-		db.WriteMoisture(os.Getenv("INFLUX_ORG"), os.Getenv("INFLUX_BUCKET"), "peikko", value)
-	}
+	moisture_data(writer, b)
 	InfoLogger.Printf("Body of the request was: %s", b)
 }
 
