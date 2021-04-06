@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	host := ""
+	host := "localhost"
 	if os.Getenv("HOST") != "" {
 		host = os.Getenv("HOST")
 	}

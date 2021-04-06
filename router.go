@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/binary"
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"raspi/server/db"
 
 	"github.com/gorilla/mux"
 )
@@ -25,13 +28,19 @@ func root(writer http.ResponseWriter, request *http.Request) {
 }
 
 func debug(writer http.ResponseWriter, request *http.Request) {
-	bytes, err := ioutil.ReadAll(request.Body)
+	b, err := ioutil.ReadAll(request.Body)
 	if err != nil {
 		ErrorLogger.Println(err)
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	InfoLogger.Printf("Body of the request was: %s", bytes)
+	value, error := binary.Uvarint(b)
+	if error <= 0 {
+		ErrorLogger.Printf("Failed to read uint from request bytes: %d", error)
+	} else {
+		db.WriteMoisture(os.Getenv("INFLUX_ORG"), os.Getenv("INFLUX_BUCKET"), "peikko", int(value))
+	}
+	InfoLogger.Printf("Body of the request was: %s", b)
 }
 
 func router() *mux.Router {
