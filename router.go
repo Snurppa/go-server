@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/binary"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"raspi/server/db"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -34,11 +34,11 @@ func debug(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	value, error := binary.Uvarint(b)
-	if error <= 0 {
-		ErrorLogger.Printf("Failed to read uint from request bytes: %d", error)
+	value, error := strconv.Atoi(string(b))
+	if error != nil {
+		ErrorLogger.Printf("Failed to convert int from request bytes: %b", b)
 	} else {
-		db.WriteMoisture(os.Getenv("INFLUX_ORG"), os.Getenv("INFLUX_BUCKET"), "peikko", int(value))
+		db.WriteMoisture(os.Getenv("INFLUX_ORG"), os.Getenv("INFLUX_BUCKET"), "peikko", value)
 	}
 	InfoLogger.Printf("Body of the request was: %s", b)
 }
