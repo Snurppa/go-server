@@ -7,7 +7,7 @@ ARG GOARCH=amd64
 ARG TARGETPLATFORM
 WORKDIR /go/src/raspi/
 COPY . .
-RUN apk add --no-cache git
+RUN apk add --no-cache git ca-certificates
 # When using -o and building (possibly) multiple packages, the target for -o must be directory or else:
 # go build: cannot write multiple packages to non-directory
 RUN mkdir -p /go/bin/builds
@@ -20,5 +20,6 @@ RUN CGO_ENABLED=$CGO_ENABLED GOOS=$GOOS GOARCH=$(echo "${TARGETPLATFORM}" | cut 
 FROM scratch
 COPY --from=builder /go/bin/builds /
 COPY --from=builder /go/src/raspi/templates /templates
+COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 ENTRYPOINT ["/server"]
 LABEL org.opencontainers.image.source https://github.com/Snurppa/go-server
